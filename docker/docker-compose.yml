@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  auth-service:
+    build: .
+    container_name: auth-service
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - MONGODB_URI=mongodb://mongo:27017/ecom-auth
+      - REDIS_URL=redis://redis:6379
+      - JWT_ACCESS_SECRET=your-super-secret-access-key-min-32-chars
+      - JWT_REFRESH_SECRET=your-super-secret-refresh-key-min-32-chars
+      - JWT_ACCESS_EXPIRY=15m
+      - JWT_REFRESH_EXPIRY=7d
+    depends_on:
+      - mongo
+      - redis
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+    volumes:
+      - ./src:/app/src  # Hot reload for development
+      - /app/node_modules  # Don't override node_modules
+
+  # MongoDB
+  mongo:
+    image: mongo:7
+    container_name: auth-mongo
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=ecommerce-auth
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: auth-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+# Volumes for data persistence
+volumes:
+  mongo-data:
+    driver: local
+  redis-data:
+    driver: local
+
+# Network for service communication
+networks:
+  ecommerce-network:
+    driver: bridge
