@@ -1,7 +1,6 @@
 import { verifyAccessToken } from '../config/jwt.js';
 import { redisHelpers } from '../config/redis.js';
 
-// Verify JWT token
 export const verifyToken = async (req, res, next) => {
   try {
     // Get token from header
@@ -50,7 +49,6 @@ export const verifyToken = async (req, res, next) => {
     });
   }
 };
-// Optional auth middleware (doesn't fail if no token)
 export const optionalAuth = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;

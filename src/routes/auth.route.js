@@ -48,7 +48,7 @@ router.post("/change-password", verifyToken, authLimiter, changePasswordValidati
 
 router.post("/send-verification", verifyToken, authLimiter, sendVerificationEmail);
 
-router.post("/verify-email", verifyToken, verifyEmailValidation, verifyEmail);
+router.get("/verify-email", verifyEmailValidation, verifyEmail);
 
 router.get("/health", (req, res) => {
   res.status(200).json({
