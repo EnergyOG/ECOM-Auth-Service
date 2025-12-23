@@ -8,7 +8,6 @@ export class AppError extends Error {
   }
 }
 
-// 404 handler
 export const notFound = (req, res, next) => {
   const error = new AppError(
     `Route not found: ${req.method} ${req.originalUrl}`,

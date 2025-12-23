@@ -1,4 +1,4 @@
-import { body, validationResult } from 'express-validator';
+import { body, query, validationResult } from 'express-validator';
 
 // Validation error handler
 const handleValidationErrors = (req, res, next) => {
@@ -110,37 +110,43 @@ export const forgotPasswordValidation = [
   handleValidationErrors
 ];
 
+// Verify password reset email validation
+export const verifyPasswordResetValidation = [
+  query('token')
+    .exists()
+    .withMessage('Reset token is required')
+    .isString()
+    .withMessage('Reset token must be a string')
+    .isLength({ min: 20 })
+    .withMessage('Reset token is invalid'),
+
+  handleValidationErrors
+];
+
 // Reset password validation
 export const resetPasswordValidation = [
-  body('email')
-    .trim()
-    .isEmail()
-    .normalizeEmail()
-    .withMessage('Valid email is required'),
-  
-  body('resetToken')
+  body('resetSessionId')
     .notEmpty()
-    .withMessage('Reset token is required')
-    .isLength({ min: 10, max: 100 })
-    .withMessage('Invalid reset token'),
-  
+    .withMessage('Reset session ID is required')
+    .isString()
+    .withMessage('Reset session ID must be a string'),
+
   body('newPassword')
     .isLength({ min: 8, max: 128 })
     .withMessage('Password must be 8-128 characters')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
     .withMessage('Password must contain uppercase, lowercase, and number'),
-  
+
   handleValidationErrors
 ];
 
 // Verify email validation
 export const verifyEmailValidation = [
-  body('token')
+  query('token')
     .notEmpty()
     .withMessage('Verification token is required')
     .isLength({ min: 10, max: 100 })
     .withMessage('Invalid verification token'),
-  
+
   handleValidationErrors
 ];
-

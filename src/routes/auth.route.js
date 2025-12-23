@@ -3,6 +3,7 @@ import {
   register,
   login,
   refreshToken,
+  verifyPasswordResetEmail,
   logout,
   getProfile,
   updateProfile,
@@ -19,6 +20,7 @@ import {
   updateProfileValidation,
   changePasswordValidation,
   forgotPasswordValidation,
+  verifyPasswordResetValidation,
   resetPasswordValidation,
   verifyEmailValidation,
 } from "../middleware/validator.js";
@@ -35,6 +37,8 @@ router.post("/login", strictAuthLimiter, signInValidation, login);
 router.post("/refresh", authLimiter, refreshToken);
 
 router.post("/forgot-password", strictAuthLimiter, forgotPasswordValidation, forgotPassword);
+
+router.get("/verify-password-reset", strictAuthLimiter, verifyPasswordResetValidation, verifyPasswordResetEmail);
 
 router.post("/reset-password", strictAuthLimiter, resetPasswordValidation, resetPassword);
 

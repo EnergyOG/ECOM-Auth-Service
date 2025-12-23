@@ -131,7 +131,7 @@ export const login = async (req, res, next) => {
   }
 };
 
-export const refreshToken = async (req, res, next) => {
+export const refreshToken = async (req, res, next) => { 
   try {
     const refreshToken = req.cookies.refreshToken;
     if (!refreshToken) {
@@ -212,8 +212,9 @@ export const changePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body;
     const user = await User.findById(req.user.id).select("+password");
+    const comparePassword = await bcrypt.compare(currentPassword, user.password);
 
-    if (!user || !(await bcrypt.compare(currentPassword, user.password))) {
+    if (!user || !comparePassword) {
       return res.status(401).json({
         success: false,
         error: "Current password incorrect",
@@ -361,7 +362,7 @@ export const sendVerificationEmail = async (req, res, next) => {
     await redisHelpers.setEx(
       `verify_email:${hashedToken}`,
       user._id.toString(),
-      24 * 60 * 60
+      24 * 60 * 60 //24 hrs
     );
 
     await sendEmail(user.email, rawToken);
@@ -403,6 +404,106 @@ export const verifyEmail = async (req, res, next) => {
     });
   } catch (err) {
     next(err);
+  }
+};
+
+export const getProfile = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+
+    const cachedUser = await redisHelpers.get(`user:${userId}`);
+    if (cachedUser) {
+      return res.status(200).json({
+        success: true,
+        data: { user: cachedUser },
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
+    }
+
+    const userResponse = {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      isEmailVerified: user.isEmailVerified,
+      status: user.status,
+      lastLogin: user.lastLogin,
+      createdAt: user.createdAt,
+    };
+
+    await redisHelpers.setEx(`user:${userId}`, userResponse, 3600);
+
+    res.status(200).json({
+      success: true,
+      data: { user: userResponse },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateProfile = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { email, username } = req.body;
+
+    if (email || username) {
+      const existingUser = await User.findOne({
+        _id: { $ne: userId },
+        $or: [...(email ? [{ email }] : [])],
+      });
+
+      if (existingUser) {
+        return res.status(409).json({
+          success: false,
+          error: "Email already in use",
+        });
+      }
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      {
+        ...(email && { email }),
+        ...(username && { username }),
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
+    }
+
+    await redisHelpers.del(`user:${userId}`);
+
+    const userResponse = {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      isEmailVerified: user.isEmailVerified,
+      status: user.status,
+      lastLogin: user.lastLogin,
+      createdAt: user.createdAt,
+    };
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      data: { user: userResponse },
+    });
+  } catch (error) {
+    next(error);
   }
 };
 

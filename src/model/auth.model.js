@@ -7,7 +7,7 @@ const userSchema = new Schema(
       required: [true, "Username is required"],
       trim: true,
       minlength: [3, "Username must be at least 3 characters"],
-      maxlength: [30, "Username must be less than 30 characters"]
+      maxlength: [30, "Username must be less than 30 characters"],
     },
     email: {
       type: String,
@@ -15,23 +15,33 @@ const userSchema = new Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      match: [/^\S+@\S+\.\S+$/, "Please enter a valid email"]
+      match: [/^\S+@\S+\.\S+$/, "Please enter a valid email"],
     },
     password: {
       type: String,
       required: [true, "Password is required"],
       minlength: [6, "Password must be at least 6 characters"],
-      select: false
+      select: false,
     },
     role: {
       type: String,
       enum: ["user", "admin"],
-      default: "user"
-    }
+      default: "user",
+    },
+    status: {
+      type: String,
+      enum: ["active", "suspended", "pending"],
+      default: "active",
+    },
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    lastLogin: {
+      type: Date,
+    },
   },
-  {
-    timestamps: true
-  }
+  { timestamps: true }
 );
 
 export default model("User", userSchema);
