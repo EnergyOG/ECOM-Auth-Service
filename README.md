@@ -65,4 +65,4 @@ Postman is used as our API testing tool during development to validate and debug
 ## Link to postman
 Below is the link to the Postman collection for this project, which can be used to test and verify all available endpoints.
 
-[![Run in Postman](https://run.pstmn.io/button.svg)](https://www.postman.com/energyog/dennis-public-workspace/folder/39196290-97174968-00c7-4c35-bf49-93cc97495506/?action=share&creator=39196290&ctx=documentation&active-environment=39196290-c393d247-fcbc-42ac-8e28-527b5b2f066a)
+[![Run in Postman](https://run.pstmn.io/button.svg)](https://www.postman.com/energyog/workspace/dennis-public-workspace/folder/39196290-97174968-00c7-4c35-bf49-93cc97495506?action=share&creator=39196290&ctx=documentation&active-environment=39196290-cf43b945-5988-4c6f-baa6-5ab7758845f0)
