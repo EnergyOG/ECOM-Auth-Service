@@ -1,58 +1,65 @@
-# Auth Service
+# 🔐 Auth Service
 
-**Authentication Service** for the **E-Commerce Microservices Backend**.  
-Handles **user registration, login, JWT authentication, refresh tokens, and role-based access control**.
-
----
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Architecture](#architecture)
-- [Getting Started](#getting-started)
-- [Environment Variables](#environment-variables)
-- [API Endpoints](#api-endpoints)
-- [Authentication Flow](#authentication-flow)
-- [Testing](#testing)
-- [CI/CD](#cicd)
-- [Contributing](#contributing)
-- [License](#license)
+A production-ready authentication and authorization microservice built with **Node.js, Express, MongoDB, Redis, and JWT**.  
+This service handles user authentication, role-based access control, email verification, password recovery, session management, and admin operations using secure best practices.
 
 ---
 
-## Overview
+## 🚀 Features
 
-This service is a **core authentication microservice** in the e-commerce platform.  
-It is designed to work with multiple services such as **user-service, order-service, and payment-service**, providing secure access and authorization.
+### Authentication
+- User registration & login
+- Secure password hashing (bcrypt)
+- JWT access & refresh tokens
+- Refresh token rotation
+- Logout with token invalidation
+
+### Authorization
+- Role-based access control (User / Admin)
+- First admin bootstrap via environment variable
+- Admin-only user management routes
+
+### Account Management
+- Email verification
+- Forgot / Reset password flow
+- Change password
+- Update profile
+- Last login tracking
+
+### Security
+- Soft delete (accounts are never permanently removed)
+- Suspended account handling
+- Redis-backed token storage
+- HTTP-only secure cookies
+- Token invalidation on password change
+
+### Email Services
+- Email verification
+- Password reset email
+- Account deletion notification
+
+### Performance
+- Redis caching for user sessions
+- Optimized database queries
+- Centralized middleware validation
 
 ---
 
-## Features
+## 🏗️ Tech Stack
 
-- User **registration** and **login**
-- **JWT-based authentication** (Access & Refresh Tokens)
-- **Role-based access control (RBAC)**
-- Password **hashing and encryption**
-- Middleware for **authorization checks**
-- Scalable **microservices design**
-- **Dockerized** for containerized deployments
-- Designed for **CI/CD pipelines**
-
----
-
-## Tech Stack
-
-- **Node.js** / **Express.js**
-- **MongoDB** / Mongoose
-- **JWT** for authentication
-- **Bcrypt** for password hashing
-- **Docker** for containerization
-- **GitHub Actions** for CI/CD
-- **ESLint** / **Prettier** for code quality
+| Technology | Usage |
+|----------|------|
+| Node.js | Runtime |
+| Express | HTTP server |
+| MongoDB | Database |
+| Mongoose | ODM |
+| Redis | Token storage & caching |
+| JWT | Authentication |
+| bcrypt | Password hashing |
+| Nodemailer | Email delivery |
+| Yup | Request validation |
 
 ---
 
-## Architecture
+## 📁 Project Structure
 

@@ -14,6 +14,7 @@ import {
   verifyEmail,
   getAllUsers,
   softDeleteUser,
+  ensureActiveUser,
 } from "../controllers/auth.controller.js";
 
 import {
@@ -60,7 +61,7 @@ router.get("/verify-email", verifyEmailValidation, verifyEmail);
 
 router.patch("/admin/users/:userId/role", verifyToken, requireAdmin, changePassword);
 
-router.delete("/admin/users/:userId", verifyToken, requireAdmin, softDeleteUser);
+router.delete("/admin/users/:userId", verifyToken, ensureActiveUser,requireAdmin, softDeleteUser);
 
 router.get("/health", (req, res) => {
   res.status(200).json({
