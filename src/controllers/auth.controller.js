@@ -646,6 +646,21 @@ export const updateUserStatus = async (req, res, next) => {
   }
 };
 
+export const forceLogoutUser = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+
+    await redisHelpers.del(`refresh_token:${userId}`);
+    await redisHelpers.del(`user:${userId}`);
+
+    res.status(200).json({
+      success: true,
+      message: "User logged out from all sessions",
+    });
+  } catch (err) {
+    next(err);
+  }
+};
 
 
 export default {
