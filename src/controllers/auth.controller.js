@@ -609,6 +609,45 @@ export const ensureActiveUser = async (req, res, next) => {
   }
 };
 
+export const updateUserStatus = async (req, res, next) => {
+  try {
+    const { status } = req.body;
+    const { userId } = req.params;
+
+    if (!["active", "suspended"].includes(status)) {
+      return res.status(400).json({ error: "Invalid status" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user || user.isDeleted) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (user.email === process.env.SUPER_ADMIN_EMAIL) {
+      return res.status(403).json({
+        error: "Super admin status cannot be changed",
+      });
+    }
+
+    user.status = status;
+    await user.save();
+
+    // Force logout if suspended
+    if (status === "suspended") {
+      await redisHelpers.del(`refresh_token:${userId}`);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `User ${status} successfully`,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+
 export default {
   register,
   login,
