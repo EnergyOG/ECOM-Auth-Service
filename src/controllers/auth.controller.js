@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import User from "../model/auth.model.js";
 import { generateTokenPair, verifyRefreshToken } from "../config/jwt.js";
 import { redisHelpers } from "../config/redis.js";
-import { sendVerificationEmail as sendEmail } from "../services/email.service.js";
+import { sendVerificationEmail as sendEmail, sendAccountDeletionEmail } from "../services/email.service.js";
 
 export const register = async (req, res, next) => {
   try {
@@ -516,6 +516,9 @@ export const updateProfile = async (req, res, next) => {
 export const changeUserRole = async (req, res) => {
   const { role } = req.body;
 
+  const user = await User.findById(req.params.userId);
+  if (!user) return res.status(404).json({ message: "User not found" });
+
   if (user.email === process.env.SUPER_ADMIN_EMAIL) {
   return res.status(403).json({
     message: "Super admin role cannot be changed",
@@ -526,12 +529,10 @@ export const changeUserRole = async (req, res) => {
     return res.status(400).json({ message: "Invalid role" });
   }
 
-  const user = await User.findById(req.params.id);
-  if (!user) return res.status(404).json({ message: "User not found" });
-
   user.role = role;
   user.tokenVersion += 1; // invalidate old tokens
   await user.save();
+
 
   res.json({ message: `User role updated to ${role}` });
 };
@@ -563,7 +564,7 @@ export const softDeleteUser = async (req, res, next) => {
     }
 
     user.isDeleted = true;
-    user.deletedAt = new Date();
+    user.deleteAt = new Date();
     await user.save();
 
     await redisHelpers.del(`refresh_token:${userId}`);
@@ -577,6 +578,7 @@ export const softDeleteUser = async (req, res, next) => {
     console.log({
       action: "SOFT_DELETE_USER",
       actor: req.user.id,
+      actorName: req.user.username,
       target: userId,
       role: user.role,
       time: new Date(),
@@ -591,6 +593,7 @@ export const softDeleteUser = async (req, res, next) => {
   }
 }
 
+//middleware for softDeleteUser
 export const ensureActiveUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);

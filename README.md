@@ -45,7 +45,7 @@ This service handles user authentication, role-based access control, email verif
 
 ---
 
-## 🏗️ Tech Stack
+## Tech Stack
 
 | Technology | Usage |
 |----------|------|
@@ -59,4 +59,10 @@ This service handles user authentication, role-based access control, email verif
 | Nodemailer | Email delivery |
 | Yup | Request validation |
 
----
+# POSTMAN
+Postman is used as our API testing tool during development to validate and debug endpoints. This ensures all functionalities work correctly before deployment, helping to avoid issues and unnecessary consumption of system resources in production.
+
+## Link to postman
+Below is the link to the Postman collection for this project, which can be used to test and verify all available endpoints.
+
+[![Run in Postman](https://run.pstmn.io/button.svg)](https://www.postman.com/energyog/dennis-public-workspace/folder/39196290-97174968-00c7-4c35-bf49-93cc97495506/?action=share&creator=39196290&ctx=documentation&active-environment=39196290-c393d247-fcbc-42ac-8e28-527b5b2f066a)
