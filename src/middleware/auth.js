@@ -49,6 +49,7 @@ export const verifyToken = async (req, res, next) => {
     });
   }
 };
+
 export const optionalAuth = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
@@ -66,5 +67,12 @@ export const optionalAuth = async (req, res, next) => {
     // Silently fail - request continues without user
   }
   
+  next();
+};
+
+export const requireAdmin = (req, res, next) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Access denied' });
+  }
   next();
 };

@@ -12,6 +12,8 @@ import {
   resetPassword,
   sendVerificationEmail,
   verifyEmail,
+  getAllUsers,
+  softDeleteUser,
 } from "../controllers/auth.controller.js";
 
 import {
@@ -25,12 +27,14 @@ import {
   verifyEmailValidation,
 } from "../middleware/validator.js";
 
-import { verifyToken } from "../middleware/auth.js";
+import { requireAdmin, verifyToken } from "../middleware/auth.js";
 import { authLimiter, strictAuthLimiter } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
 
 router.post("/register", strictAuthLimiter, signUpValidation, register);
+
+router.get("/all-users", strictAuthLimiter, getAllUsers)
 
 router.post("/login", strictAuthLimiter, signInValidation, login);
 
@@ -53,6 +57,10 @@ router.post("/change-password", verifyToken, authLimiter, changePasswordValidati
 router.post("/send-verification", verifyToken, authLimiter, sendVerificationEmail);
 
 router.get("/verify-email", verifyEmailValidation, verifyEmail);
+
+router.patch("/admin/users/:userId/role", verifyToken, requireAdmin, changePassword);
+
+router.delete("/admin/users/:userId", verifyToken, requireAdmin, softDeleteUser);
 
 router.get("/health", (req, res) => {
   res.status(200).json({

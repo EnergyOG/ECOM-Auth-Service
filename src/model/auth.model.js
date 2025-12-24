@@ -40,6 +40,11 @@ const userSchema = new Schema(
     lastLogin: {
       type: Date,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    deleteAt: Date,
   },
   { timestamps: true }
 );

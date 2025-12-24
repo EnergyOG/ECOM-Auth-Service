@@ -17,12 +17,20 @@ export const register = async (req, res, next) => {
       });
     }
 
+    let role = "user";
+    const adminExists = await User.exists({ role: "admin" });
+
+    if (!adminExists && email === process.env.SUPER_ADMIN_EMAIL) {
+      role = "admin";
+    }
+
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const user = await User.create({
       username,
       email,
       password: hashedPassword,
+      role,
     });
 
     const tokens = generateTokenPair({
@@ -63,12 +71,33 @@ export const register = async (req, res, next) => {
   }
 };
 
+export const getAllUsers = async (req, res, next) => {
+  try {
+    const users = await User.find();
+    if (users.length === 0) {
+      return res.status(400).json({
+        message: "No users found",
+      });
+    }
+    return res.status(200).json({
+      message: "Users found successfully",
+      data: users,
+    });
+  } catch (err) {
+    console.log("Error", err);
+    res.status(500).json({
+      message: "Internal Server Error",
+      error: err.message,
+    });
+  }
+};
+
 export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email }).select("+password");
-    if (!user) {
+    if (!user || user.isDeleted) {
       return res.status(401).json({
         success: false,
         error: "Invalid email or password",
@@ -131,14 +160,11 @@ export const login = async (req, res, next) => {
   }
 };
 
-export const refreshToken = async (req, res, next) => { 
+export const refreshToken = async (req, res, next) => {
   try {
     const refreshToken = req.cookies.refreshToken;
     if (!refreshToken) {
-      return res.status(401).json({
-        success: false,
-        error: "Refresh token missing",
-      });
+      return res.status(401).json({ error: "Refresh token missing" });
     }
 
     const decoded = verifyRefreshToken(refreshToken);
@@ -147,18 +173,12 @@ export const refreshToken = async (req, res, next) => {
     );
 
     if (!storedToken || storedToken !== refreshToken) {
-      return res.status(401).json({
-        success: false,
-        error: "Invalid or expired refresh token",
-      });
+      return res.status(401).json({ error: "Invalid refresh token" });
     }
 
     const user = await User.findById(decoded.userId);
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        error: "User not found",
-      });
+    if (!user || user.isDeleted) {
+      return res.status(401).json({ error: "User not found" });
     }
 
     const tokens = generateTokenPair({
@@ -181,12 +201,7 @@ export const refreshToken = async (req, res, next) => {
         sameSite: "strict",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       })
-      .json({
-        success: true,
-        data: {
-          accessToken: tokens.accessToken,
-        },
-      });
+      .json({ success: true, data: { accessToken: tokens.accessToken } });
   } catch (err) {
     next(err);
   }
@@ -212,7 +227,10 @@ export const changePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body;
     const user = await User.findById(req.user.id).select("+password");
-    const comparePassword = await bcrypt.compare(currentPassword, user.password);
+    const comparePassword = await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
 
     if (!user || !comparePassword) {
       return res.status(401).json({
@@ -277,10 +295,7 @@ export const verifyPasswordResetEmail = async (req, res, next) => {
   try {
     const { token } = req.query;
 
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(token)
-      .digest("hex");
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
     const userId = await redisHelpers.get(
       `password_reset_verify:${hashedToken}`
@@ -382,10 +397,7 @@ export const verifyEmail = async (req, res, next) => {
   try {
     const { token } = req.query;
 
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(token)
-      .digest("hex");
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
     const userId = await redisHelpers.get(`verify_email:${hashedToken}`);
     if (!userId) {
@@ -506,6 +518,97 @@ export const updateProfile = async (req, res, next) => {
     next(error);
   }
 };
+
+export const changeUserRole = async (req, res) => {
+  const { role } = req.body;
+
+  if (!["user", "admin"].includes(role)) {
+    return res.status(400).json({ message: "Invalid role" });
+  }
+
+  const user = await User.findById(req.params.id);
+  if (!user) return res.status(404).json({ message: "User not found" });
+
+  user.role = role;
+  user.tokenVersion += 1; // invalidate old tokens
+  await user.save();
+
+  res.json({ message: `User role updated to ${role}` });
+};
+
+export const softDeleteUser = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+
+    if (req.user.id === userId) {
+      return res.status(400).json({
+        success: false,
+        error: "You cannot delete your own account",
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user || user.isDeleted) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
+    }
+
+    if (user.email === process.env.SUPER_ADMIN_EMAIL) {
+      return res.status(403).json({
+        success: false,
+        error: "Super admin account cannot be deleted",
+      });
+    }
+
+    user.isDeleted = true;
+    user.deletedAt = new Date();
+    await user.save();
+
+    await redisHelpers.del(`refresh_token:${userId}`);
+
+    try {
+      await sendAccountDeletionEmail(user.email, user.username);
+    } catch (e) {
+      console.error("Deletion email failed:", e.message);
+    }
+
+    console.log({
+      action: "SOFT_DELETE_USER",
+      actor: req.user.id,
+      target: userId,
+      role: user.role,
+      time: new Date(),
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "User account has been deactivated",
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export const ensureActiveUser = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user || user.isDeleted) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
+    }
+
+    req.currentUser = user;
+    next();
+  } catch (err) {
+    next(err);
+  }
+};
+
 
 export default {
   register,

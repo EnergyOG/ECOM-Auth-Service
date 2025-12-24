@@ -12,7 +12,7 @@ export const sendVerificationEmail = async (email, token) => {
   const verifyUrl = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
 
   await transporter.sendMail({
-    from: '"Your App" <no-reply@yourapp.com>',
+    from: '"Ecom Verification" <ecom1ghana@gmail.com>',
     to: email,
     subject: 'Verify your email',
     html: `
@@ -20,5 +20,14 @@ export const sendVerificationEmail = async (email, token) => {
       <a href="${verifyUrl}">Verify Email</a>
       <p>This link expires in 24 hours.</p>
     `
+  });
+};
+
+export const sendAccountDeletionEmail = async (email, username) => {
+  await transporter.sendMail({
+    from: '"Ecom Support" <ecom1ghana@gmail.com>',
+    to: email,
+    subject: "Your account has been deactivated",
+    text: `Hello ${username}, your account has been deactivated by an administrator.`,
   });
 };
