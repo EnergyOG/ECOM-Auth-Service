@@ -73,22 +73,16 @@ export const register = async (req, res, next) => {
 
 export const getAllUsers = async (req, res, next) => {
   try {
-    const users = await User.find();
-    if (users.length === 0) {
-      return res.status(400).json({
-        message: "No users found",
-      });
-    }
-    return res.status(200).json({
-      message: "Users found successfully",
+    const users = await User.find({ isDeleted: false }).select(
+      "-password"
+    );
+
+    res.status(200).json({
+      success: true,
       data: users,
     });
   } catch (err) {
-    console.log("Error", err);
-    res.status(500).json({
-      message: "Internal Server Error",
-      error: err.message,
-    });
+    next(err);
   }
 };
 
@@ -522,6 +516,12 @@ export const updateProfile = async (req, res, next) => {
 export const changeUserRole = async (req, res) => {
   const { role } = req.body;
 
+  if (user.email === process.env.SUPER_ADMIN_EMAIL) {
+  return res.status(403).json({
+    message: "Super admin role cannot be changed",
+  });
+}
+
   if (!["user", "admin"].includes(role)) {
     return res.status(400).json({ message: "Invalid role" });
   }
@@ -661,7 +661,6 @@ export const forceLogoutUser = async (req, res, next) => {
     next(err);
   }
 };
-
 
 export default {
   register,

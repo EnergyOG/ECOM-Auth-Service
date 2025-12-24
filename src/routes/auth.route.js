@@ -15,6 +15,9 @@ import {
   getAllUsers,
   softDeleteUser,
   ensureActiveUser,
+  changeUserRole,
+  updateUserStatus,
+  forceLogoutUser,
 } from "../controllers/auth.controller.js";
 
 import {
@@ -59,9 +62,13 @@ router.post("/send-verification", verifyToken, authLimiter, sendVerificationEmai
 
 router.get("/verify-email", verifyEmailValidation, verifyEmail);
 
-router.patch("/admin/users/:userId/role", verifyToken, requireAdmin, changePassword);
+router.patch("/admin/users/:userId/role", verifyToken, requireAdmin, changeUserRole);
 
 router.delete("/admin/users/:userId", verifyToken, ensureActiveUser,requireAdmin, softDeleteUser);
+
+router.patch("/admin/users/:userId/status", verifyToken, requireAdmin, updateUserStatus);
+
+router.post("/admin/users/:userId/force-logout", verifyToken, requireAdmin, forceLogoutUser);
 
 router.get("/health", (req, res) => {
   res.status(200).json({
