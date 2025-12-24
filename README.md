@@ -1,11 +1,11 @@
-# 🔐 Auth Service
+# Auth Service
 
 A production-ready authentication and authorization microservice built with **Node.js, Express, MongoDB, Redis, and JWT**.  
 This service handles user authentication, role-based access control, email verification, password recovery, session management, and admin operations using secure best practices.
 
 ---
 
-## 🚀 Features
+## Features
 
 ### Authentication
 - User registration & login
@@ -60,6 +60,3 @@ This service handles user authentication, role-based access control, email verif
 | Yup | Request validation |
 
 ---
-
-## 📁 Project Structure
-
